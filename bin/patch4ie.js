@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-
+const child_process = require('child_process');
 const program = require('commander');
 const chalk = require('chalk');
 const ora = require('ora');
-const spinner = ora();
+const spinner = ora({
+    discardStdin: process.platform !== 'win32'
+});
 const fs = require('fs');
 const path = require('path');
 const errArr = [];
@@ -13,7 +15,26 @@ if (!fs.existsSync(path.join(process.cwd(), 'package.json'))) {
     console.log(chalk.red(`\n Please run patch4ie command at your project root path \n`));
     return;
 }
-spinner.start('Updating configuration...');
+let shellPrefix = '';
+if (process.platform === 'darwin') {
+    shellPrefix = 'sudo '
+}
+const packager = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const shell = `${shellPrefix}npm i classlist.js web-animations-js core-js babel-polyfill`;
+const npmProcess = child_process.spawn(packager, ['install', 'classlist.js', 'web-animations-js', 'core-js', 'babel-polyfill'], {
+    cwd: path.resolve(process.cwd()),
+    shell: true,
+    stdio: 'inherit'
+});
+npmProcess.on('close', (code) => {
+    if (code === 0) {
+        spinner.start('\n Updating configuration... \n');
+        startConfig();
+    } else {
+        spinner.fail('package install failed');
+    }
+});
+
 function readAngularJson() {
     try {
         const d = JSON.parse(fs.readFileSync('./angular.json', 'utf8'));
@@ -27,8 +48,8 @@ function readAngularJson() {
                 };
             }
             // add es5 config for serve
-            if (d['projects'][k]['serve']) {
-                d['projects'][k]['serve']['es5'] = {
+            if (d['projects'][k]['architect']['serve']) {
+                d['projects'][k]['architect']['serve']['es5'] = {
                     "browserTarget": "app:build:es5"
                 };
             }
@@ -123,7 +144,7 @@ function writeBrowsersList(content) {
 
 }
 function startConfig() {
-    readAngularJson();
+    // readAngularJson();
     readTsconfigJson();
     readPolyfillJs();
     readBrowsersList();
@@ -138,4 +159,4 @@ function startConfig() {
     }
 
 }
-startConfig();
+
