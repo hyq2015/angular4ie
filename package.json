@@ -1,13 +1,13 @@
 {
   "name": "angular-ie-cli",
-  "version": "0.0.1",
+  "version": "0.0.12",
   "description": "patch your angular project to support IE browser",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "bin": {
-    "patch4ie": "bin/patch"
+    "patch4ie": "bin/patch4ie"
   },
   "repository": {
     "type": "git",
