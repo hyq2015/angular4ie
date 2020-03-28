@@ -3,15 +3,20 @@
 const program = require('commander');
 const chalk = require('chalk');
 const ora = require('ora');
-const download = require('download-git-repo');
-const tpl = require(`${__dirname}/../template`);
-const spinner = ora('Downloading...');
+const spinner = ora();
 const fs = require('fs');
 const path = require('path');
-// spinner.start();
+const errArr = [];
+program.parse(process.argv);
+const isDemo = program.args[0] === 'test';
+if (!fs.existsSync(path.join(process.cwd(), 'package.json'))) {
+    console.log(chalk.red(`\n Please run patch4ie command at your project root path \n`));
+    return;
+}
+spinner.start('Updating configuration...');
 function readAngularJson() {
-    fs.readFile('angular.json','utf8', (err, data) => {
-        const d = JSON.parse(data);
+    try {
+        const d = JSON.parse(fs.readFileSync(path.resolve(__dirname, './angular.json'), 'utf8'));
         for(const k of Object.keys(d['projects'])) {
             // add es5BrowserSupport: true
             d['projects'][k]['architect']['build']['options'].es5BrowserSupport = true;
@@ -29,60 +34,108 @@ function readAngularJson() {
             }
         }
         writeAngularJson(d);
-    });
+    } catch (e) {
+        if (!errArr.includes('angular.json')) {
+            errArr.push('angular.json');
+        }
+        console.error(e);
+    }
 }
 function writeAngularJson(json) {
-    fs.writeFile('angular.json', JSON.stringify(json), (err, data) => {
-        if (err) {
-            console.error(err);
+    try {
+        fs.writeFileSync(!isDemo ? './angular.json' : './angular.demo.json', JSON.stringify(json));
+    }catch (e) {
+        if (!errArr.includes('angular.json')) {
+            errArr.push('angular.json');
         }
-        console.log('修改 angular.json 成功===')
-    });
+        console.error(e);
+    }
 }
 
 function readTsconfigJson() {
-    fs.readFile('tsconfig.json', 'utf8', (err, data) => {
-        const d = JSON.parse(data);
+    try {
+        const d = JSON.parse(fs.readFileSync(path.resolve(__dirname, './tsconfig.json'), 'utf8'));
         d['compilerOptions']['target'] = 'es5';
         writeTsconfigJson(d);
-    });
+    }catch (e) {
+        if (!errArr.includes('tsconfig.json')) {
+            errArr.push('tsconfig.json');
+        }
+        console.error(e);
+    }
 }
 function writeTsconfigJson(json) {
-    fs.writeFile('tsconfig.json', JSON.stringify(json), (err, data) => {
-        if (err) {
-            console.error(err);
+    try {
+        fs.writeFileSync(!isDemo ? './tsconfig.json' : './tsconfig.demo.json', JSON.stringify(json));
+    }catch (e) {
+        if (!errArr.includes('tsconfig.json')) {
+            errArr.push('tsconfig.json');
         }
-        console.log('修改 tsconfig.json 成功===')
-    });
+        console.error(e);
+    }
 }
 
 function readPolyfillJs() {
     // this polyfills.js file may come from internet, so it not simply cp, should use write
-    fs.readFile('polyfills.js','utf8', (err, data) => {
-        writePolyfillJs(data);
-    });
+    try {
+        const d = fs.readFileSync(path.resolve(__dirname, './polyfills.js'),'utf8');
+        writePolyfillJs(d);
+    }catch (e) {
+        if (!errArr.includes('polyfills.ts')) {
+            errArr.push('polyfills.ts');
+        }
+        console.error(e);
+    }
+
 }
 function writePolyfillJs(jsContent) {
-    fs.writeFile(path.resolve(__dirname, './src/polyfills.ts'), jsContent, (err, data) => {
-        if (err) {
-            console.error(err);
+    try {
+        fs.writeFileSync(!isDemo ? './src/polyfills.ts' : './src/polyfills.demo.ts', jsContent);
+    }catch (e) {
+        if (!errArr.includes('polyfills.ts')) {
+            errArr.push('polyfills.ts');
         }
-        console.log('修改 polyfills.ts 成功===')
-    });
+        console.error(e);
+    }
 }
 
 function readBrowsersList() {
-    fs.readFile(path.resolve(__dirname, '../browserslist'),'utf8', (err, data) => {
-        console.log(data)
-    });
+    try {
+        const d = fs.readFileSync(path.resolve(__dirname, './browserslist'),'utf8');
+        writeBrowsersList(d);
+    }catch (e) {
+        if (!errArr.includes('browserslist')) {
+            errArr.push('browserslist');
+        }
+        console.error(e);
+    }
+
 }
-readBrowsersList();
-// download(tpl['polyfill'], 'dist', null, (err) => {
-//     if (err) {
-//         spinner.fail();
-//         console.log(chalk.red(`Download failed ${err}`));
-//         return;
-//     }
-//     spinner.succeed();
-//
-// });
+function writeBrowsersList(content) {
+    try {
+        fs.writeFileSync(!isDemo ? './browserslist' : './browserslistDemo', content);
+    }catch (e) {
+        if (!errArr.includes('browserslist')) {
+            errArr.push('browserslist');
+        }
+        console.error(e);
+    }
+
+}
+function startConfig() {
+    readAngularJson();
+    readTsconfigJson();
+    readPolyfillJs();
+    readBrowsersList();
+    if (errArr.length > 0) {
+        spinner.fail();
+        for (let item of errArr) {
+            console.log(chalk.red(`\n ${item} update failed \n`));
+        }
+    } else {
+        spinner.succeed();
+        console.log(chalk.green(`\n all configuration updated successfully! \n`));
+    }
+
+}
+startConfig();
