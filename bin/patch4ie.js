@@ -16,7 +16,7 @@ if (!fs.existsSync(path.join(process.cwd(), 'package.json'))) {
 spinner.start('Updating configuration...');
 function readAngularJson() {
     try {
-        const d = JSON.parse(fs.readFileSync(path.resolve(__dirname, './angular.json'), 'utf8'));
+        const d = JSON.parse(fs.readFileSync('./angular.json', 'utf8'));
         for(const k of Object.keys(d['projects'])) {
             // add es5BrowserSupport: true
             d['projects'][k]['architect']['build']['options'].es5BrowserSupport = true;
@@ -54,7 +54,7 @@ function writeAngularJson(json) {
 
 function readTsconfigJson() {
     try {
-        const d = JSON.parse(fs.readFileSync(path.resolve(__dirname, './tsconfig.json'), 'utf8'));
+        const d = JSON.parse(fs.readFileSync('./tsconfig.json', 'utf8'));
         d['compilerOptions']['target'] = 'es5';
         writeTsconfigJson(d);
     }catch (e) {
@@ -78,7 +78,7 @@ function writeTsconfigJson(json) {
 function readPolyfillJs() {
     // this polyfills.js file may come from internet, so it not simply cp, should use write
     try {
-        const d = fs.readFileSync(path.resolve(__dirname, './polyfills.js'),'utf8');
+        const d = fs.readFileSync(path.resolve(__dirname, '../polyfills.js'),'utf8');
         writePolyfillJs(d);
     }catch (e) {
         if (!errArr.includes('polyfills.ts')) {
@@ -101,7 +101,7 @@ function writePolyfillJs(jsContent) {
 
 function readBrowsersList() {
     try {
-        const d = fs.readFileSync(path.resolve(__dirname, './browserslist'),'utf8');
+        const d = fs.readFileSync(path.resolve(__dirname, '../browserslist'),'utf8');
         writeBrowsersList(d);
     }catch (e) {
         if (!errArr.includes('browserslist')) {

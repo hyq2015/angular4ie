@@ -1,6 +1,6 @@
 {
   "name": "angular-ie-cli",
-  "version": "0.0.18",
+  "version": "0.0.19",
   "description": "patch your angular project to support IE browser",
   "main": "index.js",
   "scripts": {
